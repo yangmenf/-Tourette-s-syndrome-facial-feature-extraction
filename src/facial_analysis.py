@@ -200,19 +200,26 @@ class FacialAnalyzer:
             symmetry_change = np.std(self.feature_history['symmetry'][-3:])
             
             # 设置更敏感的阈值
-            movement_threshold = 0.01  # 面部运动阈值
-            asymmetry_threshold = 0.15  # 不对称阈值
+            movement_threshold = 0.004  # 眼睛开合度阈值
+            mouth_threshold = 0.001  # 嘴部开合度阈值
+            asymmetry_threshold = 0.04  # 面部对称性阈值
             
             # 1. 检测突然的面部运动
             if (left_eye_change > movement_threshold or 
-                right_eye_change > movement_threshold or 
-                mouth_change > movement_threshold):
+                right_eye_change > movement_threshold):
                 tic_detection['tic_detected'] = True
-                tic_detection['tic_type'] = 'muscle_movement'
-                tic_detection['tic_intensity'] = max(left_eye_change, right_eye_change, mouth_change)
+                tic_detection['tic_type'] = 'eye_movement'
+                tic_detection['tic_intensity'] = max(left_eye_change, right_eye_change)
                 tic_detection['tic_confidence'] = min(tic_detection['tic_intensity'] / movement_threshold, 1.0)
             
-            # 2. 检测面部不对称
+            # 2. 检测嘴部运动
+            elif mouth_change > mouth_threshold:
+                tic_detection['tic_detected'] = True
+                tic_detection['tic_type'] = 'mouth_movement'
+                tic_detection['tic_intensity'] = mouth_change
+                tic_detection['tic_confidence'] = min(mouth_change / mouth_threshold, 1.0)
+            
+            # 3. 检测面部不对称
             elif features['facial_symmetry'] > asymmetry_threshold:
                 tic_detection['tic_detected'] = True
                 tic_detection['tic_type'] = 'asymmetry'
